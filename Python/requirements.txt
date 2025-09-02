@@ -1,0 +1,6 @@
+pydantic-settings
+sqlalchemy
+google-auth
+PyJWT
+uvicorn
+fastapi
