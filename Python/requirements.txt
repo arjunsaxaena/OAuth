@@ -4,3 +4,4 @@ google-auth
 PyJWT
 uvicorn
 fastapi
+requests
