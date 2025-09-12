@@ -24,7 +24,9 @@ def request_otp(request: OtpRequest):
     if key is None:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Key not set")
 
-    key_b64 = base64.b64encode(key.encode()).decode()
+    key_b64 = base64.b64encode(key.encode()).decode() # Encodes the key string to bytes (key.encode()), 
+                                                      # Base64-encodes those bytes (base64.b64encode(...)), 
+                                                      # and then decodes the resulting bytes back to a string (.decode()), storing
     logger.debug(f"Encoded key: {key_b64}")
 
     auth_params = {
@@ -76,8 +78,8 @@ def request_otp(request: OtpRequest):
             timeout=10,
         )
         logger.debug(f"Send OTP response status: {send_otp_response.status_code}")
-        send_otp_response.raise_for_status()
-        data = send_otp_response.json()
+        send_otp_response.raise_for_status() # Raises an exception if the status is 4xx/5xx
+        data = send_otp_response.json() # Parses the response body as JSON and stores it in data
         logger.debug(f"Send OTP response data: {data}")
 
         if data.get("responseCode") == 200:
@@ -90,7 +92,10 @@ def request_otp(request: OtpRequest):
 
     except Exception as e:
         error_details = None
-        if 'send_otp_response' in locals():
+        if 'send_otp_response' in locals(): # Checks whether send_otp_response was created in the local scope
+                                            # (i.e., whether the exception happened after the requests.post()
+                                            # returned a response object). This helps get more useful error 
+                                            # info from that response instead of only the exception object.
             try:
                 error_details = send_otp_response.json()
             except Exception:
@@ -99,3 +104,25 @@ def request_otp(request: OtpRequest):
             error_details = str(e)
         logger.exception(f"OTP sending failed: {error_details}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"OTP sent failed: {error_details}")
+
+
+def verify_otp (verification_id: str, otp: str, auth_token: str) -> bool:
+    validate_url = getattr(settings, "MESSAGE_CENTRAL_VALIDATE_URL", None)
+    params = {
+            "verificationId": verification_id,
+            "code": otp
+    }
+    
+    try:
+        response = requests.get(
+            validate_url,
+            params=params,
+            headers={"authToken": auth_token},
+            timeout=10
+        )
+        response.raise_for_status()
+        data=response.json()
+        return data.get("responseCode") == 200
+    except Exception as e:
+        logger.error(f"OTP Validation Failed: {e}")
+        return false
