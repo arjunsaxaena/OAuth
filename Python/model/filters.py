@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from uuid import UUID
 from typing import Optional
 
-class UserFilters(BaseModel):
+class GetUserFilters(BaseModel):
     id: Optional[UUID] = None
     name: Optional[str] = None
     email: Optional[str] = None

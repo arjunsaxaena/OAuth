@@ -2,6 +2,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     DB_URL: str
+    JWT_SECRET: str
     MESSAGE_CENTRAL_AUTH_URL: str
     MESSAGE_CENTRAL_VALIDATE_URL: str
     MESSAGE_CENTRAL_SEND_OTP_URL: str

@@ -13,7 +13,7 @@ class BaseRepository(Generic[T]): # Generic variable will take the value of a mo
         query = db.query(self.model)
         filter_data = filters.model_dump(exclude_unset=True) # Pydantic v2 method to convert model to dictionary
 
-        for field, value in filter_data:
+        for field, value in filter_data.items():
             if value is not None and hasattr(self.model, field): # If field's value is not null and that field is
                                                                  # present in self.model
                                                                  # The model in our case is Users and if the filter

@@ -86,6 +86,7 @@ def request_otp(request: OtpRequest):
             return {
                 "message": "OTP sent successfully",
                 "verification_id": data["data"]["verificationId"],
+                "auth_token": auth_token,
             }
         else:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=data.get("message", "OTP sent failed"))
@@ -125,4 +126,4 @@ def verify_otp (verification_id: str, otp: str, auth_token: str) -> bool:
         return data.get("responseCode") == 200
     except Exception as e:
         logger.error(f"OTP Validation Failed: {e}")
-        return false
+        return False
