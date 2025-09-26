@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"log"
+	"path/filepath"
 
 	"github.com/spf13/viper"
 )
@@ -14,7 +15,7 @@ type Config struct {
 }
 
 type DatabaseConfig struct {
-	URL string `mapstructure:"url"`
+	DBURL string `mapstructure:"db_url"`
 }
 
 type JWTConfig struct {
@@ -30,34 +31,38 @@ type MessageCentralConfig struct {
 }
 
 func LoadConfig() (*Config, error) {
-	viper.SetConfigName(".env")
-	viper.SetConfigType("env")
-	viper.AddConfigPath(".")
-	viper.AddConfigPath("./..")
-	viper.AddConfigPath("./../..")
+    paths := []string{".", "./..", "./../.."}
+    var readErr error
+    for _, p := range paths {
+        viper.SetConfigFile(filepath.Join(p, ".env"))
+        readErr = viper.ReadInConfig()
+        if readErr == nil {
+            break
+        }
+    }
+    if readErr != nil {
+        if _, ok := readErr.(viper.ConfigFileNotFoundError); !ok {
+            log.Printf("Error reading config file: %v", readErr)
+        }
+    }
 
-	viper.SetEnvPrefix("")
+    viper.AutomaticEnv()
+    bindEnvVars()
 
-	viper.AutomaticEnv()
+    var config Config
+    if err := viper.Unmarshal(&config); err != nil {
+        return nil, fmt.Errorf("unable to decode config into struct: %w", err)
+    }
 
-	if err := viper.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			log.Printf("Error reading config file: %v", err)
-		}
-	}
+    if config.Database.DBURL == "" {
+        config.Database.DBURL = viper.GetString("DB_URL")
+    }
 
-	bindEnvVars()
-
-	var config Config
-	if err := viper.Unmarshal(&config); err != nil {
-		return nil, fmt.Errorf("unable to decode config into struct: %w", err)
-	}
-
-	return &config, nil
+    return &config, nil
 }
 
 func bindEnvVars() {
-	viper.BindEnv("database.url", "DB_URL")
+    viper.BindEnv("database.db_url", "DB_URL")
 	viper.BindEnv("jwt.secret", "JWT_SECRET")
 	viper.BindEnv("message_central.auth_url", "MESSAGE_CENTRAL_AUTH_URL")
 	viper.BindEnv("message_central.validate_url", "MESSAGE_CENTRAL_VALIDATE_URL")
@@ -69,7 +74,7 @@ func bindEnvVars() {
 func (c *Config) GetConfigMap() map[string]interface{} {
 	return map[string]interface{}{
 		"database": map[string]interface{}{
-			"url": c.Database.URL,
+			"db_url": c.Database.DBURL,
 		},
 		"jwt": map[string]interface{}{
 			"secret": c.JWT.Secret,
@@ -86,7 +91,7 @@ func (c *Config) GetConfigMap() map[string]interface{} {
 
 func (c *Config) GetEnvMap() map[string]string {
 	return map[string]string{
-		"DB_URL":                        c.Database.URL,
+		"DB_URL":                        c.Database.DBURL,
 		"JWT_SECRET":                    c.JWT.Secret,
 		"MESSAGE_CENTRAL_AUTH_URL":      c.MessageCentral.AuthURL,
 		"MESSAGE_CENTRAL_VALIDATE_URL":  c.MessageCentral.ValidateURL,

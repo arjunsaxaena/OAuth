@@ -21,7 +21,7 @@ const (
 type Microservice string
 
 const (
-	NCB                 Microservice = "NCB"
+	OAUTH                 Microservice = "OAUTH"
 )
 
 type LogMessage struct {
