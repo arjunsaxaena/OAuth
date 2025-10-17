@@ -53,3 +53,30 @@ func ReadJsonFromBody(w http.ResponseWriter, r *http.Request, data any) error{
 
 	return nil
 }
+
+// WriteSuccessResponse writes a successful JSON response
+func WriteSuccessResponse(w http.ResponseWriter, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	
+	response := JsonResponse{
+		Error:   false,
+		Message: "Success",
+		Data:    data,
+	}
+	
+	json.NewEncoder(w).Encode(response)
+}
+
+// WriteErrorResponse writes an error JSON response
+func WriteErrorResponse(w http.ResponseWriter, statusCode int, message string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	
+	response := JsonResponse{
+		Error:   true,
+		Message: message,
+	}
+	
+	json.NewEncoder(w).Encode(response)
+}

@@ -5,6 +5,7 @@ import (
 	"log"
 	"path/filepath"
 
+	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
 )
 
@@ -32,18 +33,18 @@ type MessageCentralConfig struct {
 
 func LoadConfig() (*Config, error) {
     paths := []string{".", "./..", "./../.."}
-    var readErr error
+    var envErr error
     for _, p := range paths {
-        viper.SetConfigFile(filepath.Join(p, ".env"))
-        readErr = viper.ReadInConfig()
-        if readErr == nil {
+        envPath := filepath.Join(p, ".env")
+        if err := godotenv.Overload(envPath); err == nil {
+            envErr = nil
             break
+        } else {
+            envErr = err
         }
     }
-    if readErr != nil {
-        if _, ok := readErr.(viper.ConfigFileNotFoundError); !ok {
-            log.Printf("Error reading config file: %v", readErr)
-        }
+    if envErr != nil {
+        log.Printf(".env not loaded from search paths: %v", envErr)
     }
 
     viper.AutomaticEnv()
@@ -100,3 +101,4 @@ func (c *Config) GetEnvMap() map[string]string {
 		"MESSAGE_CENTRAL_KEY":           c.MessageCentral.Key,
 	}
 }
+
